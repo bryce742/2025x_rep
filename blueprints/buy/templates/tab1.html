@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="buy-content" 
+     style="
+        {% if content_boxed %} 
+            background-color: {{ box_background }};
+            border: {{ box_border }};
+            padding: {{ box_padding }};
+            margin: {{ box_margin }};
+        {% endif %}
+     ">
+
+    <!-- Heading Container -->
+    <div style="text-align: {{ heading_alignment }};">
+        <h1 style="
+            color: {{ heading_color }};
+            font-family: {{ heading_font }};
+            font-size: {{ heading_font_size }};
+            font-weight: {{ heading_font_weight }};
+            margin-bottom: 20px;
+            background-color: {{heading_background_color}};
+            display: inline-block;
+        ">
+            {{ main_heading }}
+        </h1>
+    </div>
+
+    <!-- Paragraph -->
+    <div style="text-align: {{ paragraph_alignment }}; margin-bottom: 20px;">
+        <p style="
+            color: {{ paragraph_color }};
+            background-color: {{ paragraph_background }};
+            font-family: {{ paragraph_font }};
+            font-size: {{ paragraph_font_size }};
+            display: inline-block;
+        ">
+            {{ paragraphs }}
+        </p>
+    </div>
+
+    <!-- Jupiter Terminal -->
+    <div id="integrated-terminal" style="width: 400px; height: 568px; margin: 0 auto; border: 2px solid #333; border-radius: 10px; overflow: hidden;"></div>
+
+    <!-- Center-aligned Wrapper for Success Message, Blog Form, and Submissions -->
+    <div style="text-align: {{ blog_alignment }}; display: flex; flex-direction: column; align-items: center;">
+
+        <!-- Success Message -->
+        <div id="success-message" style="display: none; margin: 20px auto;">
+            <p style="font-size: 24px; color: {{ success_text_color }}; background-color:{{ success_background_color }};">
+                {{ success_text }}
+            </p>
+            <img src="{{ success_image }}" style="width: {{ success_image_width }}; height: auto; padding-bottom: 30px;">
+        </div>
+
+        <!-- Blog Submission Form -->
+        <div class="blog-form" style="margin-top: 40px; width: 100%; max-width: 400px; text-align: center;">
+            <h3 style="color: {{ blog_title_color }}; font-size: {{ blog_title_font_size }}; background-color:{{ paragraph_background }};">{{ blog_title }}</h3>
+            <form action="{{ url_for('buy.submit_blog') }}" method="post">
+                <label for="username" style="color: {{ form_label_text_color }}; font-size: {{ form_label_font_size }}; background-color:{{ paragraph_background }};">
+                    {{ form_label_username }}
+                </label>
+                <input type="text" id="username" name="username" required style="width: 100%; margin-bottom: 10px;">
+                
+                <textarea id="content" name="content" required style="width: 100%; height: 100px; margin-bottom: 10px;"></textarea>
+                
+                <button type="submit" style="width: 100%; background-color: {{ button_background_color }}; color: {{ button_text_color }}; margin-top: 10px;">Submit</button>
+            </form>
+        </div>
+
+        <!-- Display Submissions -->
+        <div class="submissions" style="margin-top: 40px; width: 100%; max-width: 400px; text-align: center;">
+            <h3 style="color: {{ submissions_title_color }}; font-size: {{ submissions_font_size }}; background-color:{{ paragraph_background }};">{{ submissions_title }}</h3>
+            <ul style="list-style-type: none; padding: 0;">
+                {% for submission in submissions %}
+                    <li style="
+                        background-color: {{ submissions_background_color }};
+                        padding: 15px;
+                        margin: 10px 0;
+                        border-radius: 5px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        color: gold;
+                    ">
+                        <div>
+                            <strong>{{ submission.username }}:</strong> {{ submission.content }}
+                        </div>
+                        <button onclick="document.getElementById('like-form-{{ loop.index0 }}').submit();">
+                            ❤️ <span class="like-count">{{ submission.likes }}</span>
+                        </button>
+                        <form id="like-form-{{ loop.index0 }}" action="{{ url_for('buy.like_submission', index=loop.index0) }}" method="post" style="display: none;"></form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div> <!-- End of Center-aligned Wrapper -->
+
+</div>
+
+<script src="https://terminal.jup.ag/main-v2.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    function initializeJupiter() {
+      window.Jupiter.init({
+        displayMode: "integrated",
+        integratedTargetId: "integrated-terminal",
+        strictTokenList: false,
+        endpoint: "{{ JUPITER_ENDPOINT }}",
+        formProps: {
+          fixedOutputMint: true,
+          swapMode: "ExactIn",
+          initialOutputMint: "G4w9owMvJmsDiPUPea7DV1WviZQFqifoN1FvpZpppump",
+          platformFeeBips: 20,
+          platformFeeAccount: "HJrDpLcmMAkVKa5CRBiqqQxnmD2tRW7AE7YkNXTwwg68",
+        },
+        onSuccess: ({ txid, swapResult }) => {
+          document.getElementById('success-message').style.display = 'block';
+          if (typeof window.Jupiter.reset === "function") {
+            window.Jupiter.reset();
+          }
+          setTimeout(() => {
+            initializeJupiter();
+          }, 2000);
+        },
+        onSwapError: ({ error }) => {
+          console.error('Swap Error:', error);
+        }
+      });
+    }
+    initializeJupiter();
+  });
+</script>
+{% endblock %}

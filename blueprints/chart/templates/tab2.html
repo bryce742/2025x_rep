@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-content" 
+     style="
+        {% if content_boxed %} 
+            background-color: {{ box_background }};
+            border: {{ box_border }};
+            padding: {{ box_padding }};
+            margin: {{ box_margin }};
+        {% endif %}
+     ">
+
+    <div class="container" style="text-align: center;">
+        <!-- Chart Heading -->
+        <h1 class="highlight-text" style="
+            color: {{ chart_heading_color }};
+            font-size: {{ chart_heading_font_size }};
+            background-color: {{ chart_heading_background_color }};
+        ">
+            {{ chart_heading_text }}
+        </h1>
+
+        <!-- Chart Embed -->
+        <div id="dexscreener-embed">
+            <iframe src="https://dexscreener.com/solana/G4w9owMvJmsDiPUPea7DV1WviZQFqifoN1FvpZpppump?embed=1&theme=dark&trades=0&info=0"></iframe>
+        </div>
+
+        <!-- Vote Buttons -->
+        <div class="vote-container" style="margin-top: 20px;">
+            <button id="rug-it-btn" style="
+                color: {{ vote_moon_color }};
+                font-size: {{ vote_moon_font_size }};
+                margin-right: 10px;
+                background-color: {{ vote_2025x_background_color }};
+            ">
+                {{ vote_moon_text }} <span id="rug-it-count">0</span>
+            </button>
+            <button id="moon-it-btn" style="
+                color: {{ vote_grape_color }};
+                font-size: {{ vote_grape_font_size }};
+                background-color: {{ vote_new_background_color }};
+            ">
+                {{ vote_grape_text }} <span id="moon-it-count">0</span>
+            </button>
+        </div>
+
+        <!-- Additional Styling for Embedded Chart -->
+        <style>
+            #dexscreener-embed {
+                position: relative;
+                width: 100%;
+                padding-bottom: 125%;
+            }
+        
+            @media (min-width: 1400px) {
+                #dexscreener-embed {
+                    padding-bottom: 65%;
+                }
+            }
+        
+            #dexscreener-embed iframe {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                border: 0;
+            }
+        </style>
+
+        <!-- JavaScript for Voting -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                function updateVotes(votes) {
+                    document.getElementById("rug-it-count").textContent = votes.rug_it;
+                    document.getElementById("moon-it-count").textContent = votes.moon_it;
+                }
+            
+                fetch('/chart/get_votes')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateVotes(data);
+                    })
+                    .catch(err => console.error("Error fetching votes:", err));
+            
+                document.getElementById("rug-it-btn").addEventListener("click", function() {
+                    fetch('/chart/votes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ vote_type: 'rug_it' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateVotes(data.votes);
+                        } else {
+                            alert(data.message || "Error in voting");
+                        }
+                    })
+                    .catch(err => console.error("Error submitting vote:", err));
+                });
+            
+                document.getElementById("moon-it-btn").addEventListener("click", function() {
+                    fetch('/chart/votes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ vote_type: 'moon_it' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateVotes(data.votes);
+                        } else {
+                            alert(data.message || "Error in voting");
+                        }
+                    })
+                    .catch(err => console.error("Error submitting vote:", err));
+                });
+            });
+        </script>        
+    </div>
+</div>
+
+<script src="https://terminal.jup.ag/main-v2.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function initializeJupiter() {
+            window.Jupiter.init({
+                displayMode: "widget",
+                integratedTargetId: "integrated-terminal",
+                strictTokenList: false,
+                endpoint: "https://long-greatest-crater.solana-mainnet.quiknode.pro/84855c0db92789861c7c482ef6dbd5e52b1cfbc7",
+                formProps: {
+                    fixedOutputMint: true,
+                    swapMode: "ExactIn",
+                    initialOutputMint: "G4w9owMvJmsDiPUPea7DV1WviZQFqifoN1FvpZpppump",
+                    platformFeeBips: 20,
+                    platformFeeAccount: "HJrDpLcmMAkVKa5CRBiqqQxnmD2tRW7AE7YkNXTwwg68",
+                },
+                onSuccess: ({ txid, swapResult }) => {
+                    console.log(`Swap successful! Transaction ID: ${txid}`);
+                    const successMessage = document.getElementById('success-message');
+                    successMessage.style.display = 'block';
+                    if (typeof window.Jupiter.reset === "function") {
+                        window.Jupiter.reset();
+                    }
+                    setTimeout(() => {
+                        initializeJupiter();
+                    }, 2000);
+                },
+                onSwapError: ({ error }) => {
+                    console.error('Swap Error:', error);
+                }
+            });
+        }
+        initializeJupiter();
+    });
+</script>
+
+{% endblock %}
